@@ -3,7 +3,7 @@ use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
 declare_id!("5N33BWZRjgQhGCamDsx3pPsgBb5o54APDcvYCsTGQ1bp");
 
 #[program]
-pub mod anchor_vault_q3_2024 {
+pub mod vault {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -19,6 +19,67 @@ pub mod anchor_vault_q3_2024 {
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         ctx.accounts.withdraw(amount)?;
+
+        Ok(())
+    }
+
+    pub fn close(ctx: Context<Close>) -> Result<()> {
+        ctx.accounts.close()?;
+
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Close<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"vault", vault_state.key().as_ref()], 
+        // P=rogram will be able sign transactions on behalf of the vault account.
+        bump = vault_state.vault_bump,
+    )]
+    pub vault: SystemAccount<'info>,
+    #[account(
+        mut,
+        seeds = [b"state", user.key().as_ref()],
+        bump = vault_state.state_bump,
+        close = user
+    )]
+    pub vault_state: Account<'info, VaultState>,
+    pub system_program: Program<'info, System>,
+}
+
+impl <'info> Close<'info>{
+    pub fn close(&mut self) -> Result<()> {
+
+        let cpi_program = self.system_program.to_account_info();
+
+        let _balance = self.vault.get_lamports();
+
+        let cpi_accounts = Transfer {
+            from: self.vault.to_account_info(),
+            to: self.user.to_account_info(),
+        };
+
+        let seeds = &[
+            b"vault",
+            self.vault_state.to_account_info().key.as_ref(),
+            &[self.vault_state.vault_bump],
+        ];
+
+        let signer_seeds = &[&seeds[..]];
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            cpi_program, 
+            cpi_accounts, 
+            signer_seeds
+        );
+
+        let amount = self.vault.to_account_info().lamports();
+
+        transfer(cpi_ctx, amount)?;
 
         Ok(())
     }
