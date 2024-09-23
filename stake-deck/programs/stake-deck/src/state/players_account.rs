@@ -3,7 +3,8 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct PlayersAccount {
     pub player_1: Pubkey,
-    pub player_2: Pubkey,
+    pub player2: Option<Pubkey>,
+    pub player3:Option<Pubkey>,
     pub bet_amount: u64,
     pub game_state: u8,
     pub bump: u8,

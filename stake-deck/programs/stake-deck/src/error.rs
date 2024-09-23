@@ -14,5 +14,15 @@ pub enum StakeDeckError {
     GameAlreadyInProgress,
     #[msg("Insufficient funds for betting.")]
     InsufficientFundsForBetting,
+    #[msg("Game has not started")]
+    GameNotWaitingForPlayers,
+    #[msg("Max players reached")]
+    MaxPlayersReached,
+    #[msg("Player already joined")]
+    PlayerAlreadyJoined,
+    #[msg("Game is not in progress.")]
+    GameNotInProgress,
+    #[msg("Player is not in the game.")]
+    PlayerNotInGame,
     // Add more custom errors as needed
 }
