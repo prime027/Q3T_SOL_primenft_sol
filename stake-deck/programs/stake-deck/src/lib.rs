@@ -9,7 +9,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("3jpEDmkjLcfFqBZBj6VMq9BnNpXgwJY7v148wdWFCN1F");
+declare_id!("2v5AG8W6Zce7Z6y2cc14GbviaBSNvX3ZWKChCUiKtfdW");
 
 #[program]
 pub mod stake_deck {
@@ -28,5 +28,9 @@ pub mod stake_deck {
 
     pub fn place_bet(ctx: Context<PlaceBet>, amount: u64) -> Result<()> {
         PlaceBet::place_bet(ctx, amount)
+    }
+
+    pub fn end_game(ctx: Context<EndGame>) -> Result<()> {
+        EndGame::end_game(ctx)
     }
 }

@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-stake_deck = "3jpEDmkjLcfFqBZBj6VMq9BnNpXgwJY7v148wdWFCN1F"
+stake_deck = "2v5AG8W6Zce7Z6y2cc14GbviaBSNvX3ZWKChCUiKtfdW"
 
 [registry]
 url = "https://api.apr.dev"
