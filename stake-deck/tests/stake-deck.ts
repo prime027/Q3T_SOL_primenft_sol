@@ -12,16 +12,23 @@ describe("stake-deck", () => {
 
   const program = anchor.workspace.StakeDeck as Program<StakeDeck>;
 
+  let admin : anchor.web3.Keypair
   let player1: anchor.web3.Keypair;
   let player2: anchor.web3.Keypair;
   let gamePda: PublicKey;
   let vaultPda: PublicKey;
+  let winner: anchor.web3.Keypair; // Declare winner here
 
   it("Initializes a game", async () => {
     player1 = anchor.web3.Keypair.generate();
+    admin = anchor.web3.Keypair.generate();
 
     // Request airdrop for player1
-    const airdropSignature = await connection.requestAirdrop(player1.publicKey, 3 * anchor.web3.LAMPORTS_PER_SOL);
+    let airdropSignature = await connection.requestAirdrop(admin.publicKey, 3 * anchor.web3.LAMPORTS_PER_SOL);
+    await connection.confirmTransaction(airdropSignature);
+
+    // Request airdrop for player1
+     airdropSignature = await connection.requestAirdrop(player1.publicKey, 3 * anchor.web3.LAMPORTS_PER_SOL);
     await connection.confirmTransaction(airdropSignature);
 
     // Ensure player1 has enough balance
@@ -44,13 +51,13 @@ describe("stake-deck", () => {
     );
 
     const minBet = new BN(1_000_000); // 1 SOL in lamports
-    const maxPlayers = 4;
+    const maxPlayers = 2;
     const feePercentage = 5;
     const payoutPercentage = 95;
 
     // Initialize the game
     await program.methods
-      .initializeGame(minBet, maxPlayers, feePercentage, payoutPercentage)
+      .initializeGame(minBet, maxPlayers, feePercentage, payoutPercentage, admin.publicKey)
       .accounts({
         firstPlayer: player1.publicKey,
         gameAccount: gamePda,
@@ -65,6 +72,8 @@ describe("stake-deck", () => {
     assert.equal(gameAccount.minBet.toNumber(), minBet.toNumber());
     assert.equal(gameAccount.maxPlayers, maxPlayers);
   });
+
+  console.log("-----game initialized")
 
   it("Starts a game", async () => {
     player2 = anchor.web3.Keypair.generate();
@@ -85,6 +94,7 @@ describe("stake-deck", () => {
       .rpc();
 
     const gameAccount = await program.account.gameAccount.fetch(gamePda);
+    console.log("game state", gameAccount.gameState);
     assert.equal(gameAccount.players.length, 2, "There should be two players in the game");
   });
 
@@ -95,9 +105,10 @@ describe("stake-deck", () => {
     const playerLamports = await connection.getBalance(player1.publicKey);
     assert.isTrue(playerLamports >= betAmount.toNumber(), "Player does not have enough SOL to place the bet");
 
-    await program.methods
+    try{
+      await program.methods
       .placeBet(betAmount)
-      .accounts({
+      .accountsPartial({
         user: player1.publicKey,
         gameAccount: gamePda,
         vault: vaultPda,
@@ -105,9 +116,39 @@ describe("stake-deck", () => {
       })
       .signers([player1])
       .rpc();
+    } catch(error) {
+      console.error("Transaction failed:", error);
+    const logs = error.logs || await connection.getTransaction(error.tx);
+    console.error("Logs:", logs);
+    throw error;
+    }
+    
 
     const gameAccount = await program.account.gameAccount.fetch(gamePda);
     const player = gameAccount.players.find(p => p.pubkey.equals(player1.publicKey));
     assert.equal(player.betAmount.toNumber(), betAmount.toNumber());
   });
+
+  it("Ends a game", async () => {
+    // Initialize winner as player1 for this example
+    winner = player1; // Assign the winner
+
+    await program.methods
+    .endGame()
+    .accounts({
+      gameAccount: gamePda,
+      vault: vaultPda,
+      admin: admin.publicKey,
+      firstPlayer: player1.publicKey,
+      winner: winner.publicKey, // Use the winner's public key
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([admin, winner]) // Sign with both admin and winner
+    .rpc();
+
+     // Verify the game state is now completed
+     const gameAccountAfterEnd = await program.account.gameAccount.fetch(gamePda);
+     //assert.equal(gameAccountAfterEnd.game_state.toString(), "Completed", "Game should be completed");
+    console.log("game state", gameAccountAfterEnd.gameState);
+  })
 });

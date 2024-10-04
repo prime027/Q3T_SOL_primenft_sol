@@ -4,7 +4,7 @@ use solana_program::program::invoke;
 use solana_program::system_instruction;
 
 use crate::error::StakeDeckError;
-use crate::{GameAccount, GameState, Player, Vault};
+use crate::{GameAccount, GameState, Player};
 
 #[derive(Accounts)]
 pub struct StartGame<'info> {
@@ -12,12 +12,6 @@ pub struct StartGame<'info> {
     pub game_account: Account<'info, GameAccount>, // The game account being joined
     #[account(mut)]
     pub player: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [b"vault", game_account.key().as_ref()], // Ensure vault is seeded with game_account
-        bump
-    )]
-    pub vault: Account<'info, Vault>,
     pub system_program: Program<'info, System>,
 }
 

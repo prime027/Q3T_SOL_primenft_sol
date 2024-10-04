@@ -3,7 +3,7 @@ use solana_program::program::invoke;
 use solana_program::system_instruction;
 
 use crate::error::StakeDeckError;
-use crate::{GameAccount, GameState, Vault};
+use crate::{GameAccount, GameState, VaultState};
 
 #[derive(Accounts)]
 pub struct PlaceBet<'info> {
@@ -11,12 +11,23 @@ pub struct PlaceBet<'info> {
     pub user: Signer<'info>, // The player placing the bet
     #[account(mut)]
     pub game_account: Account<'info, GameAccount>, // The game account
+    // #[account(
+    //     mut,
+    //     seeds = [b"vault", game_account.key().as_ref()], // Ensure vault is seeded with game_account
+    //     bump
+    // )]
+    // pub vault: Account<'info, Vault>, // The vault account to hold the SOL
+    // #[account(
+    //     seeds = [b"vault", vault_state.key().as_ref()],
+    //     bump = vault_state.vault_bump,
+    // )]
+    // pub vault: SystemAccount<'info>,
     #[account(
         mut,
-        seeds = [b"vault", game_account.key().as_ref()], // Ensure vault is seeded with game_account
-        bump
+        seeds = [b"vault", game_account.key().as_ref()],  // Ensure vault is seeded with game_account
+        bump,
     )]
-    pub vault: Account<'info, Vault>, // The vault account to hold the SOL
+    pub vault: Account<'info, VaultState>,
     pub system_program: Program<'info, System>, // System program for transfers
 }
 
@@ -32,13 +43,12 @@ impl<'info> PlaceBet<'info> {
 
         // Check if the player is part of the game
         require!(
-            !game_account
+            game_account
                 .players
                 .iter()
                 .any(|player| player.pubkey == ctx.accounts.user.key()),
-            StakeDeckError::PlayerAlreadyJoined
+            StakeDeckError::PlayerNotInGame // Change the error to indicate the player is not in the game
         );
-
         // Deduct SOL from the player and transfer to the vault
         let player_lamports = **ctx.accounts.user.lamports.borrow();
         require!(

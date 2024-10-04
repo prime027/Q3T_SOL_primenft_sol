@@ -10,6 +10,7 @@ pub struct GameAccount {
     pub payout_percentage: u8,  // Payout percentage for the game
     pub bet_amount: u64,       // Total bet amount
     pub game_state: GameState,  // Current state of the game
+    // pub admin: Pubkey,          //Admin of the game 
     pub bump: u8,               // Bump seed for account
 }
 
@@ -22,6 +23,7 @@ impl GameAccount {
         1 + // fee_percentage
         1 + // payout_percentage
         8 + // bet_amount (u64)
+        //32 + // admin (Pubkey)
         1;  // bump
 }
 
@@ -39,10 +41,20 @@ pub struct Player {
     pub bet_amount: u64, // The amount the player has bet
 }
 
+
+// #[derive(borshSerialize, AnchorDeserialize, Clone)]
+// pub struct InitializeGameBumps {
+//     pub game_account: u8,
+//     pub vault_state: u8,
+//     pub vault: u8,
+// }
+
 #[account]
-pub struct Vault {
+pub struct VaultState {
     pub owner: Pubkey, // Owner of the vault (game account)
     pub balance: u64,   // Current balance in the vault
+    pub vault_bump: u8,
+    pub state_bump: u8,
 }
 
 // impl GameAccount {

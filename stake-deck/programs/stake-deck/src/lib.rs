@@ -14,8 +14,13 @@ declare_id!("2v5AG8W6Zce7Z6y2cc14GbviaBSNvX3ZWKChCUiKtfdW");
 #[program]
 pub mod stake_deck {
     use super::*;
-    pub fn initialize_game(ctx: Context<InitializeGame>, min_bet: u64, max_players: u8, fee_percentage: u8, payout_percentage: u8) -> Result<()> {
-        InitializeGame::initialize_game(ctx, min_bet, max_players, fee_percentage, payout_percentage)
+
+    // pub fn initialize_game(ctx: Context<InitializeGame>, min_bet: u64, max_players: u8, fee_percentage: u8, payout_percentage: u8, admin: Pubkey) -> Result<()> 
+    // {
+    //    // let bumps = ctx.bumps;  // Clone bumps before borrowing ctx mutably
+    //     InitializeGame::initialize_game(ctx, min_bet, max_players, fee_percentage, payout_percentage, admin)
+    pub fn initialize_game(ctx: Context<InitializeGame>, min_bet: u64, max_players: u8, fee_percentage: u8, payout_percentage: u8, admin: Pubkey) -> Result<()> {
+        InitializeGame::initialize_game(ctx, min_bet, max_players, fee_percentage, payout_percentage, admin)
     }
 
     pub fn initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
